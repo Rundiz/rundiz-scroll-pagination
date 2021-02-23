@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>JS scroll pagination</title>
+
+        <link rel="stylesheet" href="assets/css/styles.css">
+    </head>
+    <body>
+        <h1>Pre-loaded items</h1>
+        <p>There are some items that were already loaded. 
+            They will be removed if this page was scrolled to the other pages and hit reload.</p>
+        <div id="posts-container" class="posts-container">
+            <div class="rd-scroll-pagination" data-startoffset="0" style="visibility: hidden;"></div>
+            <div class="each-post-item"><p>Pre loaded item 1.</p></div>
+            <div class="each-post-item"><p>Pre loaded item 2.</p></div>
+            <div class="each-post-item"><p>Pre loaded item 3.</p></div>
+            <div class="each-post-item"><p>Pre loaded item 4.</p></div>
+            <div class="each-post-item"><p>Pre loaded item 5.</p></div>
+            <div class="each-post-item"><p>Pre loaded item 6.</p></div>
+            <div class="each-post-item"><p>Pre loaded item 7.</p></div>
+            <div class="each-post-item"><p>Pre loaded item 8.</p></div>
+            <div class="each-post-item"><p>Pre loaded item 9.</p></div>
+            <div class="each-post-item"><p>Pre loaded item 10.</p></div>
+        </div>
+
+        <script src="../../src/RundizScrollPagination.js" type="application/javascript"></script>
+        <script type="application/javascript">
+            const params = new URLSearchParams(window.location.search);
+            let rdspStartOffset = params.get('rdspStartOffset');// assume that start offset querystring is using default value.
+            if (rdspStartOffset !== null && rdspStartOffset !== '' && rdspStartOffset >= 10) {
+                // if the current querystring of "start offset" exists, means this was scrolled to the other pages.
+                // remove everything and let ajax work from querystring.
+                document.querySelector('#posts-container').innerHTML = '';
+            }
+
+            // on window dom loaded.
+            window.addEventListener('DOMContentLoaded', (event) => {
+                // listen on ajax failed, done to render items.
+                document.addEventListener('rdScrollPagination.start', (ajaxEvent) => {
+                    const loadingHtml = '<p class="item-loading">Loading &hellip;</p>';
+                    document.querySelector('#posts-container').insertAdjacentHTML('beforeend', loadingHtml);
+                });
+                document.addEventListener('rdScrollPagination.fail', (ajaxEvent) => {
+                    let loadingElement = document.querySelector('.item-loading');
+                    if (loadingElement) {
+                        loadingElement.remove();
+                    }
+                });
+                document.addEventListener('rdScrollPagination.done', (ajaxEvent) => {
+                    let loadingElement = document.querySelector('.item-loading');
+                    if (loadingElement) {
+                        loadingElement.remove();
+                    }
+
+                    let response = (ajaxEvent.detail ? ajaxEvent.detail.response : {});
+
+                    let listHtml = '';
+                    if (response.items) {
+                        response.items.forEach((item, index) => {
+                            listHtml += '<div class="each-post-item"><p>' + item + '</p></div>';
+                        });
+                    }
+
+                    document.querySelector('#posts-container').insertAdjacentHTML('beforeend', listHtml);
+                });
+
+                // initialize new scroll pagination class.
+                let scrollPaginationClass = new RundizScrollPagination({
+                    'containerSelector': '#posts-container',
+                    'childrenItemSelector': '.each-post-item',
+                    'startOffset': 10,
+                    'ajaxUrl': 'pagination-dummydata.php?start=%startoffset%'
+                });
+                // invoke/run the class.
+                scrollPaginationClass.invoke();
+            });
+        </script>
+    </body>
+</html>

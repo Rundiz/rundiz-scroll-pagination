@@ -3,7 +3,7 @@
  * 
  * @author Vee W.
  * @license MIT.
- * @version 0.0.1
+ * @version 0.0.2
  */
 
 
@@ -37,15 +37,29 @@ class RundizScrollPagination {
 
         if (isNaN(option.offsetHideShow) || isNaN(parseFloat(option.offsetHideShow))) {
             // the offset that children item will be hide or show when outside visible area.
+            // for the top it is (0 - nn), for the bottom it is (window height - nn) where nn is this value.
             option.offsetHideShow = 40;
         }
         this.offsetHideShow = option.offsetHideShow;
+
+        if (isNaN(option.startOffset) || isNaN(parseFloat(option.startOffset))) {
+            // start offset can be use in case that you already have pre-loaded child items 
+            // and you just want to start scroll to next page.
+            option.startOffset = 0;
+        }
+        this.startOffset = option.startOffset;
 
         // change url options ----------------------------
         if (option.changeURL !== true && option.changeURL !== false) {
             option.changeURL = true;
         }
         this.changeURL = option.changeURL;
+
+        if (isNaN(option.changeURLScrollTopOffset) || isNaN(parseFloat(option.changeURLScrollTopOffset))) {
+            // the offset from top of display area where the pagination data was scrolled before change the URL to its start offset.
+            option.changeURLScrollTopOffset = 40;
+        }
+        this.changeURLScrollTopOffset = option.changeURLScrollTopOffset;
 
         if (!option.changeURLParamStartOffset) {
             // querystring for start offset to push to the URL.
@@ -232,8 +246,8 @@ class RundizScrollPagination {
         if (paginationDataElements) {
             paginationDataElements.forEach((item, index) => {
                 let rect = item.getBoundingClientRect();
-                if (rect.top >= 0 && rect.top < 30) {
-                    // if scrolled and top of this pagination data element is on top within range (30 - for example).
+                if (rect.top >= 0 && rect.top < thisClass.changeURLScrollTopOffset) {
+                    // if scrolled and top of this pagination data element is on top within range (40 - for example).
                     // retrieve this start offset from `data-startoffset="n"`.
                     let thisStartOffset = item.dataset.startoffset;
 
@@ -393,9 +407,9 @@ class RundizScrollPagination {
         const params = new URLSearchParams(window.location.search);
         let currentStartOffsetQuerystring = params.get(this.changeURLParamStartOffset);
 
-        if (
-            currentStartOffsetQuerystring === null ||
-            currentStartOffsetQuerystring === '' || 
+        if (currentStartOffsetQuerystring === null || currentStartOffsetQuerystring === '') {
+            currentStartOffsetQuerystring = this.startOffset;
+        } else if (
             isNaN(currentStartOffsetQuerystring) ||
             isNaN(parseFloat(currentStartOffsetQuerystring)) ||
             currentStartOffsetQuerystring < 0
