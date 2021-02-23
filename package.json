@@ -1,0 +1,27 @@
+{
+  "name": "rundizscrollpagination",
+  "version": "0.0.1",
+  "description": "Scroll down the page and automatically call to get next page contents.",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Rundiz/RundizScrollPagination.git"
+  },
+  "keywords": [
+    "scroll",
+    "pagination",
+    "infinite"
+  ],
+  "author": "Vee W.",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Rundiz/RundizScrollPagination/issues"
+  },
+  "homepage": "https://github.com/Rundiz/RundizScrollPagination#readme"
+}

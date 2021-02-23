@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>JS scroll pagination</title>
+
+        <link rel="stylesheet" href="assets/css/styles.css">
+    </head>
+    <body>
+        <div id="posts-container" class="posts-container"></div>
+
+        <script src="../../src/RundizScrollPagination.js" type="application/javascript"></script>
+        <script type="application/javascript">
+            // on window dom loaded.
+            window.addEventListener('DOMContentLoaded', (event) => {
+                // listen on ajax failed, done to render items.
+                document.addEventListener('rdScrollPagination.start', (ajaxEvent) => {
+                    const loadingHtml = '<p class="item-loading">Loading &hellip;</p>';
+                    document.querySelector('#posts-container').insertAdjacentHTML('beforeend', loadingHtml);
+                });
+                document.addEventListener('rdScrollPagination.fail', (ajaxEvent) => {
+                    let loadingElement = document.querySelector('.item-loading');
+                    if (loadingElement) {
+                        loadingElement.remove();
+                    }
+                });
+                document.addEventListener('rdScrollPagination.done', (ajaxEvent) => {
+                    let loadingElement = document.querySelector('.item-loading');
+                    if (loadingElement) {
+                        loadingElement.remove();
+                    }
+
+                    let response = (ajaxEvent.detail ? ajaxEvent.detail.response : {});
+
+                    let listHtml = '';
+                    if (response.items) {
+                        response.items.forEach((item, index) => {
+                            listHtml += '<div class="each-post-item"><p>' + item + '</p></div>';
+                        });
+                    }
+
+                    document.querySelector('#posts-container').insertAdjacentHTML('beforeend', listHtml);
+                });
+
+                // initialize new scroll pagination class.
+                let scrollPaginationClass = new RundizScrollPagination({
+                    'containerSelector': '#posts-container',
+                    'childrenItemSelector': '.each-post-item',
+                    'changeURL': true,
+                    'ajaxUrl': 'pagination-dummydata.php?start=%startoffset%'
+                });
+                // invoke/run the class.
+                scrollPaginationClass.invoke();
+            });
+        </script>
+    </body>
+</html>
