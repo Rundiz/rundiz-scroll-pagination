@@ -36,6 +36,7 @@
 
             // on window dom loaded.
             window.addEventListener('DOMContentLoaded', (event) => {
+                let scrollPaginationClass;
                 // listen on ajax failed, done to render items.
                 document.addEventListener('rdScrollPagination.start', (ajaxEvent) => {
                     const loadingHtml = '<p class="item-loading">Loading &hellip;</p>';
@@ -63,10 +64,13 @@
                     }
 
                     document.querySelector('#posts-container').insertAdjacentHTML('beforeend', listHtml);
+                    // trigger on scroll for in case that there are space left in the bottom of visible area.
+                    // trigger will try to load next ajax page if there are more space left.
+                    scrollPaginationClass.triggerOnScroll();
                 });
 
                 // initialize new scroll pagination class.
-                let scrollPaginationClass = new RundizScrollPagination({
+                scrollPaginationClass = new RundizScrollPagination({
                     'containerSelector': '#posts-container',
                     'childrenItemSelector': '.each-post-item',
                     'startOffset': 10,

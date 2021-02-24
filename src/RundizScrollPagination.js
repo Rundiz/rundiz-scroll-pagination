@@ -326,9 +326,6 @@ class RundizScrollPagination {
                         'rdScrollPagination.done', {'detail': responseObject}
                     )
                 );
-                // trigger on scroll for in case that there are space left in the bottom of visible area.
-                // trigger will try to load next ajax page if there are more space left.
-                thisClass.triggerOnScroll();
 
                 return Promise.resolve(responseObject);
             })
@@ -535,7 +532,7 @@ class RundizScrollPagination {
      * best on initialize the class to trigger event 
      * and make ajax call while next pagination element is near the display area.
      * 
-     * @private This method was called from `listenOnScroll()`.
+     * This method was called from `listenOnScroll()` and outside class.
      */
     triggerOnScroll() {
         window.dispatchEvent(new Event('scroll'));

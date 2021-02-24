@@ -45,6 +45,9 @@
                     }
 
                     document.querySelector('#posts-container').insertAdjacentHTML('beforeend', response);
+                    // trigger on scroll for in case that there are space left in the bottom of visible area.
+                    // trigger will try to load next ajax page if there are more space left.
+                    scrollPaginationClass.triggerOnScroll();
                 });
 
                 // initialize new scroll pagination class.
