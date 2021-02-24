@@ -414,6 +414,16 @@ class RundizScrollPagination {
         if (currentStartOffsetQuerystring === null || currentStartOffsetQuerystring === '') {
             currentStartOffsetQuerystring = this.startOffset;
         } else if (
+            (
+                currentStartOffsetQuerystring === 0 || 
+                currentStartOffsetQuerystring === '0'
+            ) &&
+            this.startOffset != 0
+        ) {
+            // if this is preloaded that was set `startOffset` and current querystring is zero.
+            // it is possible that user scroll to the top and hit reload. so, it should start with the `startOffset` property.
+            currentStartOffsetQuerystring = this.startOffset;
+        } else if (
             isNaN(currentStartOffsetQuerystring) ||
             isNaN(parseFloat(currentStartOffsetQuerystring)) ||
             currentStartOffsetQuerystring < 0
