@@ -3,7 +3,7 @@
  * 
  * @author Vee W.
  * @license MIT.
- * @version 0.0.2
+ * @version 0.0.3
  */
 
 
@@ -180,12 +180,16 @@ class RundizScrollPagination {
                 }
                 headers = undefined;
 
-                if (response[thisClass.ajaxDataSrc] && response[thisClass.ajaxDataSrc].length > 0) {
+                // @link https://stackoverflow.com/a/43849204/128761 Original source code for access sub properties by string.
+                let responseSource = thisClass.ajaxDataSrc.split('.').reduce(
+                    (p,c)=>p&&p[c]||null, response
+                );
+                if (responseSource && responseSource.length > 0) {
                     // if there are items after XHR.
                     // append pagination data element.
                     thisClass.appendPaginationDataElement();
                     // set next start offset.
-                    thisClass.currentStartOffset = parseInt(thisClass.currentStartOffset) + parseInt(response[thisClass.ajaxDataSrc].length);
+                    thisClass.currentStartOffset = parseInt(thisClass.currentStartOffset) + parseInt(responseSource.length);
                     // mark calling to false to allow next pagination call.
                     thisClass.callingXHR = false;// move in here to prevent ajax call again when there are no more data.
                 }
