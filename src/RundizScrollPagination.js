@@ -433,24 +433,30 @@ class RundizScrollPagination {
         const params = new URLSearchParams(window.location.search);
         let currentStartOffsetQuerystring = params.get(this.changeURLParamStartOffset);
 
-        if (currentStartOffsetQuerystring === null || currentStartOffsetQuerystring === '') {
-            currentStartOffsetQuerystring = this.startOffset;
-        } else if (
-            (
-                currentStartOffsetQuerystring === 0 || 
-                currentStartOffsetQuerystring === '0'
-            ) &&
-            this.startOffset != 0
-        ) {
-            // if this is preloaded that was set `startOffset` and current querystring is zero.
-            // it is possible that user scroll to the top and hit reload. so, it should start with the `startOffset` property.
-            currentStartOffsetQuerystring = this.startOffset;
-        } else if (
-            isNaN(currentStartOffsetQuerystring) ||
-            isNaN(parseFloat(currentStartOffsetQuerystring)) ||
-            currentStartOffsetQuerystring < 0
-        ) {
-            currentStartOffsetQuerystring = 0;
+        // querystring of start offset == nothing
+        //      start offset property != 0 -> set to start offset property.
+        //      start offset property == 0 -> 0
+        // querystring of start offset == 0
+        //      start offset property != 0 -> set to start offset property.
+        //      start offset property == 0 -> 0
+        // querystring of start offset > 0
+        //      start offset property != 0
+        //          querystring of start offset <= start offset -> set to start offset property.
+        //      anything else    
+        //      start offset property == 0 -> use current querystring of start offset.
+
+        if (currentStartOffsetQuerystring > 0) {
+            if (this.startOffset !== 0) {
+                if (parseInt(currentStartOffsetQuerystring) <= parseInt(this.startOffset)) {
+                    currentStartOffsetQuerystring = this.startOffset;
+                }
+            }
+        } else {
+            if (this.startOffset != 0) {
+                currentStartOffsetQuerystring = this.startOffset;
+            } else {
+                currentStartOffsetQuerystring = 0;
+            }
         }
 
         return parseInt(currentStartOffsetQuerystring);
