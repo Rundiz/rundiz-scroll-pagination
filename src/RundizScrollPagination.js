@@ -320,7 +320,7 @@ class RundizScrollPagination {
             // begins ajax pagination.
             this.ajaxPagination()
             .then((responseObject) => {
-                responseObject.rdScrollPaginationCurrentPageOffset = thisClass.currentStartOffset;
+                responseObject.rdScrollPaginationCurrentPageOffset = thisClass.previousStartOffset;
                 document.dispatchEvent(
                     new CustomEvent(
                         'rdScrollPagination.done', {'detail': responseObject}
@@ -334,7 +334,7 @@ class RundizScrollPagination {
             })
             .catch((responseObject) => {
                 // .catch() must be after .then(). see https://stackoverflow.com/a/42028776/128761
-                responseObject.rdScrollPaginationCurrentPageOffset = thisClass.currentStartOffset;
+                responseObject.rdScrollPaginationCurrentPageOffset = thisClass.previousStartOffset;
                 document.dispatchEvent(
                     new CustomEvent(
                         'rdScrollPagination.fail', {'detail': responseObject}
