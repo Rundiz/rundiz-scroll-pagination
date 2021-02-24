@@ -334,7 +334,12 @@ class RundizScrollPagination {
             })
             .catch((responseObject) => {
                 // .catch() must be after .then(). see https://stackoverflow.com/a/42028776/128761
-                responseObject.rdScrollPaginationCurrentPageOffset = thisClass.previousStartOffset;
+                if (typeof(responseObject) === 'object') {
+                    // if responseObject is not an object.
+                    // due to ajax error can throw a string message, check before assign.
+                    responseObject.rdScrollPaginationCurrentPageOffset = thisClass.previousStartOffset;
+                }
+
                 document.dispatchEvent(
                     new CustomEvent(
                         'rdScrollPagination.fail', {'detail': responseObject}
@@ -501,6 +506,22 @@ class RundizScrollPagination {
         // trigger on scroll to make ajax pagination work immediately on start if there are space left on the bottom of visible area.
         this.triggerOnScroll();
     }// listenOnScroll
+
+
+    /**
+     * Set next start offset.
+     * 
+     * Manually set next start offset after AJAX complete. This for working with AJAX with HTML content type.
+     * 
+     * @since 0.0.4
+     * @param int number 
+     */
+    setNextStartOffset(number) {
+        this.previousStartOffset = parseInt(this.currentStartOffset);
+        this.currentStartOffset = parseInt(number);
+        // mark calling to false to allow next pagination call.
+        this.callingXHR = false;
+    }// setNextStartOffset
 
 
     /**
