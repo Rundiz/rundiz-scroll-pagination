@@ -36,8 +36,18 @@
 
                     let listHtml = '';
                     if (response.items) {
+                        let i = 1;
                         response.items.forEach((item, index) => {
-                            listHtml += '<div class="each-post-item"><p>' + item + '</p></div>';
+                            listHtml += '<div class="each-post-item';
+                            if (i === 1) {
+                                listHtml += ' rd-scroll-pagination';
+                            }
+                            listHtml += '"';
+                            if (i === 1) {
+                                listHtml += ' data-startoffset="' + ajaxEvent.detail.rdScrollPaginationCurrentPageOffset + '"';
+                            }
+                            listHtml += '><p>' + item + '</p></div>';
+                            i++;
                         });
                     }
 
@@ -49,6 +59,7 @@
                     'containerSelector': '#posts-container',
                     'childrenItemSelector': '.each-post-item',
                     'changeURLParamStartOffset': 'start',
+                    'changeURLAppendElement': false,// must render `rd-scroll-pagination` class and `data-startoffset` myself.
                     'ajaxUrl': 'pagination-dummydata.php?start=%startoffset%&demo=true'
                 });
                 // invoke/run the class.

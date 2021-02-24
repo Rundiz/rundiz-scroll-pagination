@@ -55,6 +55,14 @@ class RundizScrollPagination {
         }
         this.changeURL = option.changeURL;
 
+        if (option.changeURLAppendElement !== true && option.changeURLAppendElement !== false) {
+            // append scroll pagination element or not.
+            // if not, you have to add `class="rd-scroll-pagination" data-startoffset="nn"` 
+            // (where nn is the start offset of that round) on every first item that have got from AJAX.
+            option.changeURLAppendElement = true;
+        }
+        this.changeURLAppendElement = option.changeURLAppendElement;
+
         if (isNaN(option.changeURLScrollTopOffset) || isNaN(parseFloat(option.changeURLScrollTopOffset))) {
             // the offset from top of display area where the pagination data was scrolled before change the URL to its start offset.
             option.changeURLScrollTopOffset = 40;
@@ -119,6 +127,7 @@ class RundizScrollPagination {
         // end ajax options -------------------------------
 
         this.currentStartOffset = this.detectAndSetCurrentStartOffset();
+        this.previousStartOffset;// for checking.
         this.callingXHR = false;
         this.isScrolling = '';// up or down.
         this.XHR = new Promise((resolve, reject) => {});
@@ -148,6 +157,7 @@ class RundizScrollPagination {
             });
             XHR.addEventListener('loadstart', (event) => {
                 let response = (event.currentTarget ? event.currentTarget : event);
+                response.rdScrollPaginationCurrentPageOffset = thisClass.currentStartOffset;
                 document.dispatchEvent(
                     new CustomEvent(
                         'rdScrollPagination.start', {'detail': response}
@@ -189,6 +199,7 @@ class RundizScrollPagination {
                     // append pagination data element.
                     thisClass.appendPaginationDataElement();
                     // set next start offset.
+                    thisClass.previousStartOffset = parseInt(thisClass.currentStartOffset);
                     thisClass.currentStartOffset = parseInt(thisClass.currentStartOffset) + parseInt(responseSource.length);
                     // mark calling to false to allow next pagination call.
                     thisClass.callingXHR = false;// move in here to prevent ajax call again when there are no more data.
@@ -220,6 +231,10 @@ class RundizScrollPagination {
      * @private This method was called from `ajaxPagination()`.
      */
     appendPaginationDataElement() {
+        if (this.changeURLAppendElement === false) {
+            return ;
+        }
+
         let containerElement = document.querySelector(this.containerSelector);
         if (containerElement) {
             containerElement.insertAdjacentHTML(
@@ -305,6 +320,7 @@ class RundizScrollPagination {
             // begins ajax pagination.
             this.ajaxPagination()
             .then((responseObject) => {
+                responseObject.rdScrollPaginationCurrentPageOffset = thisClass.currentStartOffset;
                 document.dispatchEvent(
                     new CustomEvent(
                         'rdScrollPagination.done', {'detail': responseObject}
@@ -318,6 +334,7 @@ class RundizScrollPagination {
             })
             .catch((responseObject) => {
                 // .catch() must be after .then(). see https://stackoverflow.com/a/42028776/128761
+                responseObject.rdScrollPaginationCurrentPageOffset = thisClass.currentStartOffset;
                 document.dispatchEvent(
                     new CustomEvent(
                         'rdScrollPagination.fail', {'detail': responseObject}
