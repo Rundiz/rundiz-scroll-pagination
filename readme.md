@@ -2,6 +2,10 @@
 
 Scroll down the page and automatically call to get next page contents.
 
+![npm](https://img.shields.io/npm/v/rundiz-scroll-pagination) 
+![NPM](https://img.shields.io/npm/l/rundiz-scroll-pagination) 
+![npm](https://img.shields.io/npm/dt/rundiz-scroll-pagination)
+
 ## Features
 * Scroll down and auto make AJAX call to get next page contents.
 * Can replace current URL in case you hit back or reload and it will be continue from current start offset. (Can be disable via option.)
