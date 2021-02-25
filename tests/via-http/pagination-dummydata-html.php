@@ -10,9 +10,9 @@ $output = '';
 if ($start < 200) {
     for ($i = 1; $i <= 10; $i++) {
         if ($i === 1) {
-            $output .= '<div class="rd-scroll-pagination"'
-            . ' data-startoffset="' . $start . '"'
-            . ' style="visibility: hidden;"'// don't use `display: none;` because it can cause malfunction.
+            $output .= '<div class="rd-scroll-pagination"'// required html class attribute and name.
+            . ' data-startoffset="' . $start . '"'// required html data-startoffset attribute.
+            . ' style="visibility: hidden;"'// just for hiding, don't use `display: none;` because it can cause malfunction.
             . '></div>';
         }
         $output .= '<div class="each-post-item"><p>Item ' . ($start + $i) . ' - start: ' . $start . '; loop: ' . $i . '.</p></div>';
