@@ -1,6 +1,6 @@
 {
   "name": "rundiz-scroll-pagination",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Scroll down the page and automatically call to get next page contents.",
   "main": "index.js",
   "directories": {
