@@ -3,7 +3,7 @@
  * 
  * @author Vee W.
  * @license MIT.
- * @version 0.0.3
+ * @version 0.0.5
  */
 
 
@@ -317,43 +317,45 @@ class RundizScrollPagination {
                 }
             );*/
 
-            // begins ajax pagination.
-            this.ajaxPagination()
-            .then((responseObject) => {
-                responseObject.rdScrollPaginationCurrentPageOffset = thisClass.previousStartOffset;
-                document.dispatchEvent(
-                    new CustomEvent(
-                        'rdScrollPagination.done', {'detail': responseObject}
-                    )
-                );
-                // trigger on scroll for in case that there are space left in the bottom of visible area.
-                // trigger will try to load next ajax page if there are more space left.
-                thisClass.triggerOnScroll();
-
-                return Promise.resolve(responseObject);
-            })
-            .catch((responseObject) => {
-                // .catch() must be after .then(). see https://stackoverflow.com/a/42028776/128761
-                if (typeof(responseObject) === 'object') {
-                    // if responseObject is not an object.
-                    // due to ajax error can throw a string message, check before assign.
+            if (thisClass.callingXHR === false) {
+                // begins ajax pagination.
+                this.ajaxPagination()
+                .then((responseObject) => {
                     responseObject.rdScrollPaginationCurrentPageOffset = thisClass.previousStartOffset;
-                }
+                    document.dispatchEvent(
+                        new CustomEvent(
+                            'rdScrollPagination.done', {'detail': responseObject}
+                        )
+                    );
+                    // trigger on scroll for in case that there are space left in the bottom of visible area.
+                    // trigger will try to load next ajax page if there are more space left.
+                    thisClass.triggerOnScroll();
 
-                document.dispatchEvent(
-                    new CustomEvent(
-                        'rdScrollPagination.fail', {'detail': responseObject}
-                    )
-                );
+                    return Promise.resolve(responseObject);
+                })
+                .catch((responseObject) => {
+                    // .catch() must be after .then(). see https://stackoverflow.com/a/42028776/128761
+                    if (typeof(responseObject) === 'object') {
+                        // if responseObject is not an object.
+                        // due to ajax error can throw a string message, check before assign.
+                        responseObject.rdScrollPaginationCurrentPageOffset = thisClass.previousStartOffset;
+                    }
 
-                return Promise.reject(responseObject)
-                .then(() => {
-                    // not called.
-                }, (responseObject) => {
-                    // prevent uncaught error.
+                    document.dispatchEvent(
+                        new CustomEvent(
+                            'rdScrollPagination.fail', {'detail': responseObject}
+                        )
+                    );
+
+                    return Promise.reject(responseObject)
+                    .then(() => {
+                        // not called.
+                    }, (responseObject) => {
+                        // prevent uncaught error.
+                    });
                 });
-            });
-        }
+            }// endif callingXHR check
+        }// endif; total scroll > document scroll height.
     }// checkScrollAndMakeXHR
 
 
