@@ -15,7 +15,7 @@ if ($start < 200) {
             . ' style="visibility: hidden;"'// just for hiding, don't use `display: none;` because it can cause malfunction.
             . '></div>';
         }
-        $output .= '<div class="each-post-item"><p>Item ' . ($start + $i) . ' - start: ' . $start . '; loop: ' . $i . '.</p></div>';
+        $output .= '<div class="each-post-item"><p><a href="view-detail.php?id=' . ($start + $i) . '">Item ' . ($start + $i) . '</a> - start: ' . $start . '; loop: ' . $i . '.</p></div>';
     }
     usleep(300000);// 1000000 microseconds = 1 second
 } else {
