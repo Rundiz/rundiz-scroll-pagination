@@ -8,8 +8,8 @@
     </head>
     <body>
         <h1>Basic demonstration</h1>
-        <p>This page use few options of <code>RundizScrollPagination</code> class.</p>
-        <div id="posts-container" class="posts-container"></div>
+        <p>This page use most basic options of <code>RundizScrollPagination</code> class.</p>
+        <div id="container" class="posts-container"></div>
 
         <script src="../../src/RundizScrollPagination.js"></script>
         <script>
@@ -19,7 +19,7 @@
                 // listen on ajax failed, done to render items.
                 document.addEventListener('rdScrollPagination.start', (ajaxEvent) => {
                     const loadingHtml = '<p class="item-loading">Loading &hellip;</p>';
-                    document.querySelector('#posts-container').insertAdjacentHTML('beforeend', loadingHtml);
+                    document.querySelector('#container').insertAdjacentHTML('beforeend', loadingHtml);
                 });
                 document.addEventListener('rdScrollPagination.fail', (ajaxEvent) => {
                     let loadingElement = document.querySelector('.item-loading');
@@ -38,17 +38,15 @@
                     let listHtml = '';
                     if (response.items) {
                         response.items.forEach((item, index) => {
-                            listHtml += '<div class="each-post-item"><p>' + item + '</p></div>';
+                            listHtml += '<div class="each-item"><p>' + item + '</p></div>';
                         });
                     }
 
-                    document.querySelector('#posts-container').insertAdjacentHTML('beforeend', listHtml);
+                    document.querySelector('#container').insertAdjacentHTML('beforeend', listHtml);
                 });
 
                 // initialize new scroll pagination class.
                 scrollPaginationClass = new RundizScrollPagination({
-                    'containerSelector': '#posts-container',
-                    'childrenItemSelector': '.each-post-item',
                     'ajaxUrl': 'pagination-dummydata.php?start=%startoffset%'
                 });
                 // invoke/run the class.
