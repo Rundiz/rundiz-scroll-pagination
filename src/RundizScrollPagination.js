@@ -111,6 +111,18 @@ class RundizScrollPagination {
 
 
     /**
+     * @type {int} Current start offset.
+     */
+    #currentStartOffset = 0;
+
+
+    /**
+     * @type {string} Is it scrolling or not, if yes which direction. Initial value is empty string, after worked the value will be `up` or `down`.
+     */
+    #isScrolling = '';
+
+
+    /**
      * @type {number} The offset that children item will be hide or show when outside visible area. 
      *              For the top it is (0 - nn), for the bottom it is (window height - nn) where `nn` is this value.
      */
@@ -133,18 +145,6 @@ class RundizScrollPagination {
      * @type {Promise} The XHR response based on `Promise` object. You can get this property via `getXHR()` method.
      */
     #XHR = new Promise((resolve, reject) => {});
-
-
-    /**
-     * @type {int} Current start offset.
-     */
-    currentStartOffset = 0;
-
-
-    /**
-     * @type {string} Is it scrolling or not, if yes which direction. Initial value is empty string, after worked the value will be `up` or `down`.
-     */
-    isScrolling = '';
 
 
     /**
@@ -267,7 +267,7 @@ class RundizScrollPagination {
         this.#ajaxDataSrc = options.ajaxDataSrc;
         // end ajax options -------------------------------
 
-        this.currentStartOffset = this.#detectAndSetCurrentStartOffset();
+        this.#currentStartOffset = this.#detectAndSetCurrentStartOffset();
     }// constructor
 
 
@@ -294,7 +294,7 @@ class RundizScrollPagination {
             });
             XHR.addEventListener('loadstart', (event) => {
                 let response = (event.currentTarget ? event.currentTarget : event);
-                response.rdScrollPaginationCurrentPageOffset = thisClass.currentStartOffset;
+                response.rdScrollPaginationCurrentPageOffset = thisClass.#currentStartOffset;
                 document.dispatchEvent(
                     new CustomEvent(
                         'rdScrollPagination.start', {'detail': response}
@@ -336,8 +336,8 @@ class RundizScrollPagination {
                     // append pagination data element.
                     thisClass.#appendPaginationDataElement();
                     // set next start offset.
-                    thisClass.#previousStartOffset = parseInt(thisClass.currentStartOffset);
-                    thisClass.currentStartOffset = parseInt(thisClass.currentStartOffset) + parseInt(responseSource.length);
+                    thisClass.#previousStartOffset = parseInt(thisClass.#currentStartOffset);
+                    thisClass.#currentStartOffset = parseInt(thisClass.#currentStartOffset) + parseInt(responseSource.length);
                     // mark calling to false to allow next pagination call.
                     thisClass.#callingXHR = false;// move in here to prevent ajax call again when there are no more data.
                 }
@@ -349,13 +349,13 @@ class RundizScrollPagination {
                 }
             });
 
-            XHR.open(thisClass.#ajaxMethod, thisClass.#ajaxUrl.replace('%startoffset%', thisClass.currentStartOffset));
+            XHR.open(thisClass.#ajaxMethod, thisClass.#ajaxUrl.replace('%startoffset%', thisClass.#currentStartOffset));
             XHR.setRequestHeader('Accept', thisClass.#ajaxAccept);
             if (thisClass.#ajaxContentType) {
                 XHR.setRequestHeader('Content-Type', thisClass.#ajaxContentType);
             }
             if (typeof(thisClass.#ajaxData) === 'string') {
-                thisClass.#ajaxData = thisClass.#ajaxData.replace('%startoffset%', thisClass.currentStartOffset);
+                thisClass.#ajaxData = thisClass.#ajaxData.replace('%startoffset%', thisClass.#currentStartOffset);
             }
             XHR.send(thisClass.#ajaxData);
         });
@@ -380,7 +380,7 @@ class RundizScrollPagination {
             containerElement.insertAdjacentHTML(
                 'beforeend', 
                 '<div class="rd-scroll-pagination"'
-                    + ' data-startoffset="' + this.currentStartOffset + '"'
+                    + ' data-startoffset="' + this.#currentStartOffset + '"'
                     + ' style="visibility: hidden;"'// don't use `display: none;` because it can cause malfunction.
                     + '></div>'
             );
@@ -421,13 +421,28 @@ class RundizScrollPagination {
                     paramObj[thisClass.#changeURLParamStartOffset] = thisStartOffset;
 
                     // build querystring
-                    let currentUrlNoQuerystring = window.location.href.split(/[?#]/)[0];
+                    const currentURL = window.location.href;
+                    let currentUrlNoQuerystring = currentURL.split(/[?#]/)[0];
                     let queryString = Object.keys(paramObj).map((key) => {
                         return encodeURIComponent(key) + '=' + encodeURIComponent(paramObj[key])
                     }).join('&');
-                    
+
                     // replace current URL.
                     window.history.replaceState(null, '', currentUrlNoQuerystring + '?' + queryString);
+                    /**
+                     * Dispatch event on replaced URL.  
+                     * 
+                     * @since 0.0.6
+                     */
+                    let eventDetail = {
+                        'newURL': currentUrlNoQuerystring + '?' + queryString,
+                        'previousURL': currentURL,
+                    };
+                    document.dispatchEvent(
+                        new CustomEvent(
+                            'rdScrollPagination.replacedURL', {'detail': eventDetail}
+                        )
+                    );
                     return;
                 }
             });
@@ -606,6 +621,103 @@ class RundizScrollPagination {
 
 
     /**
+     * Listen on scroll window/element.
+     * 
+     * @private This method was called from `invoke()`.
+     */
+    #listenOnScroll() {
+        let thisClass = this;
+        let lastScroll = 0;
+        
+        window.addEventListener('scroll', (event) => {
+            let scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+
+            if (scrollTop >= lastScroll) {
+                // if scrolling down (content move up but mouse wheel scroll down).
+                thisClass.#isScrolling = 'down';
+            } else {
+                // if scrolling up (content move down but mouse wheel scroll up).
+                thisClass.#isScrolling = 'up';
+            }
+
+            /**
+             * Dispatch event for both scroll and before functional.  
+             * This event dispatched on scroll but before any functions will work such as show or hide elements, changed URL, etc.
+             * 
+             * @since 0.0.6
+             */
+            let eventDetail = {
+                'isScrolling': thisClass.#isScrolling,
+            };
+            document.dispatchEvent(
+                new CustomEvent(
+                    'rdScrollPagination.scrolling', {'detail': eventDetail}
+                )
+            );
+
+            if ('down' === thisClass.#isScrolling) {
+                // if scrolling down
+                thisClass.#checkScrollAndMakeXHR(event);
+                thisClass.#checkScrollAndChangeURL(event);
+                thisClass.#checkScrollOutOfDisplayAreaAndHide(event);
+            } else {
+                // if scrolling up
+                thisClass.#checkScrollAndChangeURL(event);
+                thisClass.#checkScrollOutOfDisplayAreaAndHide(event);
+            }
+
+            /**
+             * Dispatch event for both scroll and after functional.  
+             * This event dispatched on scroll and functions are already worked.
+             * 
+             * @since 0.0.6
+             */
+            eventDetail = {
+                'isScrolling': thisClass.#isScrolling,
+            };
+            document.dispatchEvent(
+                new CustomEvent(
+                    'rdScrollPagination.scrolled', {'detail': eventDetail}
+                )
+            );
+
+            lastScroll = (scrollTop <= 0 ? 0 : parseInt(scrollTop));
+        }, false);
+
+        // trigger on scroll to make ajax pagination work immediately on start if there are space left on the bottom of visible area.
+        this.triggerOnScroll();
+    }// #listenOnScroll
+
+
+    /**
+     * {@inheritdoc}
+     */
+    get currentStartOffset() {
+        return this.#currentStartOffset;
+    }// get currentStartOffset
+
+
+    /**
+     * Get `isScrolling` property status (empty string, 'up', 'down')
+     * 
+     * @return {string} Return empty string, 'up', 'down'
+     */
+    get isScrolling() {
+        return this.#isScrolling;
+    }// get isScrolling
+
+
+    /**
+     * Get XHR property object.
+     * 
+     * @return XMLHttpRequest
+     */
+    get XHR() {
+        return this.#XHR;
+    }// get XHR
+
+
+    /**
      * Get XHR property object.
      * 
      * @return XMLHttpRequest
@@ -624,39 +736,6 @@ class RundizScrollPagination {
 
 
     /**
-     * Listen on scroll window/element.
-     * 
-     * @private This method was called from `invoke()`.
-     */
-    #listenOnScroll() {
-        let thisClass = this;
-        let lastScroll = 0;
-        
-        window.addEventListener('scroll', (event) => {
-            let scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-
-            if (scrollTop >= lastScroll) {
-                // if scrolling down (content move up but mouse wheel scroll down).
-                thisClass.isScrolling = 'down';
-                thisClass.#checkScrollAndMakeXHR(event);
-                thisClass.#checkScrollAndChangeURL(event);
-                thisClass.#checkScrollOutOfDisplayAreaAndHide(event);
-            } else {
-                // if scrolling up (content move down but mouse wheel scroll up).
-                thisClass.isScrolling = 'up';
-                thisClass.#checkScrollAndChangeURL(event);
-                thisClass.#checkScrollOutOfDisplayAreaAndHide(event);
-            }
-
-            lastScroll = (scrollTop <= 0 ? 0 : parseInt(scrollTop));
-        }, false);
-
-        // trigger on scroll to make ajax pagination work immediately on start if there are space left on the bottom of visible area.
-        this.triggerOnScroll();
-    }// #listenOnScroll
-
-
-    /**
      * Set next start offset.
      * 
      * Manually set next start offset after AJAX complete. This for working with AJAX with HTML content type.
@@ -665,8 +744,8 @@ class RundizScrollPagination {
      * @param int number 
      */
     setNextStartOffset(number) {
-        this.#previousStartOffset = parseInt(this.currentStartOffset);
-        this.currentStartOffset = parseInt(number);
+        this.#previousStartOffset = parseInt(this.#currentStartOffset);
+        this.#currentStartOffset = parseInt(number);
         // mark calling to false to allow next pagination call.
         this.#callingXHR = false;
     }// setNextStartOffset
