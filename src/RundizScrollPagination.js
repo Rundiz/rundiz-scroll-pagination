@@ -430,7 +430,7 @@ class RundizScrollPagination {
                     // replace current URL.
                     window.history.replaceState(null, '', currentUrlNoQuerystring + '?' + queryString);
                     /**
-                     * Dispatch event on replaced URL.  
+                     * Replaced URL event.
                      * 
                      * @since 0.0.6
                      */
@@ -530,6 +530,7 @@ class RundizScrollPagination {
         }
         let thisClass = this;
         const windowHeight = window.innerHeight;
+        const itemsChangedVisibility = [];
 
         // check that all visible elements is outside the display area.
         let allVisibleElements = containerElement.querySelectorAll(this.#childrenItemSelector + ':not(.rd-scroll-pagination-hidden-child)');
@@ -551,6 +552,8 @@ class RundizScrollPagination {
                         throw new Error('Each item inside the container must contain one child to be able to hide properly.');
                     }
                     item.children[0].hidden = true;
+                    // push an item to array of items that had changed visibility.
+                    itemsChangedVisibility.push(item);
                 }
             });
         }
@@ -573,10 +576,30 @@ class RundizScrollPagination {
                     item.classList.remove('rd-scroll-pagination-hidden-child');
                     // remove height of this item.
                     item.style.height = null;
+                    // push an item to array of items that had changed visibility.
+                    itemsChangedVisibility.push(item);
                 }
             });
         }
         allInvisibleElements = undefined;// clear;
+
+        if (itemsChangedVisibility.length > 0) {
+            // if there is at least one item that had changed visiblity.
+            /**
+             * Display or hide children event.  
+             * The children will be display when scroll into display area or hide when scroll out of display area.
+             * 
+             * @since 0.0.6
+             */
+            const eventDetail = {
+                'itemsChangedVisibility': itemsChangedVisibility,
+            };
+            document.dispatchEvent(
+                new CustomEvent(
+                    'rdScrollPagination.displayOrHideChildren', {'detail': eventDetail}
+                )
+            );
+        }
     }// #checkScrollOutOfDisplayAreaAndHide
 
 
@@ -641,7 +664,7 @@ class RundizScrollPagination {
             }
 
             /**
-             * Dispatch event for both scroll and before functional.  
+             * Scrolling event (up or down) and before functional.  
              * This event dispatched on scroll but before any functions will work such as show or hide elements, changed URL, etc.
              * 
              * @since 0.0.6
@@ -667,7 +690,7 @@ class RundizScrollPagination {
             }
 
             /**
-             * Dispatch event for both scroll and after functional.  
+             * Scrolling event (up or down) and after functional.  
              * This event dispatched on scroll and functions are already worked.
              * 
              * @since 0.0.6
