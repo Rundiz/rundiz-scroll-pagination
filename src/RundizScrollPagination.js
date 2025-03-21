@@ -14,49 +14,9 @@ class RundizScrollPagination {
 
 
     /**
-     * @type {string} Ajax HTTP Accept header. See https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Accept for reference.
-     */
-    #ajaxAccept
-
-
-    /**
-     * @type {string} 
-     */
-    #ajaxContentType
-
-
-    /**
-     * @type {Document|XMLHttpRequestBodyInit|Blob|ArrayBuffer|TypedArray|DataView|FormData|URLSearchParams|string} The Ajax data to send with some methods such as POST, PATCH, PULL, DELETE, etc. 
-     *              The data will be like name=value&name2=value2 or get the data from the `FormData()` object. 
-     *              The string that contain `%startoffset%` will be replace with start offset.
-     *              See https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest/send for reference.
-     */
-    #ajaxData
-
-
-    /**
      * @type {string} Ajax response data source for count how many items retrieved for set new start offset.
      */
     #ajaxDataSrc
-
-
-    /**
-     * @type {string} Ajax method such as `GET`, `POST`.
-     */
-    #ajaxMethod
-
-
-    /**
-     * @type {string} Ajax response type for accept header. possible values: `response`, `responseXML`, `responseText`. 
-     *              See more details in the constructor.
-     */
-    #ajaxResponseAcceptType
-
-
-    /**
-     * @type {string} Ajax url with `%startoffset%` to use as start offset. Example: http://domain.tld/page?offset=%startoffset%
-     */
-    #ajaxUrl
 
 
     /**
@@ -157,6 +117,46 @@ class RundizScrollPagination {
      * @type {Promise} The XHR response based on `Promise` object.
      */
     #XHR = new Promise((resolve, reject) => {});
+
+
+    /**
+     * @type {string} Ajax HTTP Accept header. See https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Accept for reference.
+     */
+    ajaxAccept
+
+
+    /**
+     * @type {string} The request content-type of Ajax.
+     */
+    ajaxContentType
+
+
+    /**
+     * @type {Document|XMLHttpRequestBodyInit|Blob|ArrayBuffer|TypedArray|DataView|FormData|URLSearchParams|string} The Ajax data to send with some methods such as POST, PATCH, PULL, DELETE, etc. 
+     *              The data will be like name=value&name2=value2 or get the data from the `FormData()` object. 
+     *              The string that contain `%startoffset%` will be replace with start offset.
+     *              See https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest/send for reference.
+     */
+    ajaxData
+
+
+    /**
+     * @type {string} Ajax method such as `GET`, `POST`.
+     */
+    ajaxMethod
+
+
+    /**
+     * @type {string} Ajax response type for accept header. possible values: `response`, `responseXML`, `responseText`. 
+     *              See more details in the constructor.
+     */
+    ajaxResponseAcceptType
+
+
+    /**
+     * @type {string} Ajax url with `%startoffset%` to use as start offset. Example: http://domain.tld/page?offset=%startoffset%
+     */
+    ajaxUrl
 
 
     /**
@@ -262,22 +262,22 @@ class RundizScrollPagination {
         if (!options.ajaxUrl || typeof(options.ajaxUrl) !== 'string') {
             throw new Error('The `ajaxUrl` option is missing.');
         }
-        this.#ajaxUrl = options.ajaxUrl;
+        this.ajaxUrl = options.ajaxUrl;
 
         if (!options.ajaxMethod || typeof(options.ajaxMethod) !== 'string') {
             options.ajaxMethod = 'GET';
         }
-        this.#ajaxMethod = options.ajaxMethod;
+        this.ajaxMethod = options.ajaxMethod;
 
         if (!options.ajaxData) {
             options.ajaxData = '';
         }
-        this.#ajaxData = options.ajaxData;
+        this.ajaxData = options.ajaxData;
 
         if (!options.ajaxAccept || typeof(options.ajaxAccept) !== 'string') {
             options.ajaxAccept = 'application/json';
         }
-        this.#ajaxAccept = options.ajaxAccept;
+        this.ajaxAccept = options.ajaxAccept;
 
         // Ajax response type for accept header. possible values:
         // text/html -> response
@@ -288,12 +288,12 @@ class RundizScrollPagination {
         if (!options.ajaxResponseAcceptType || typeof(options.ajaxResponseAcceptType) !== 'string') {
             options.ajaxResponseAcceptType = 'responseText';
         }
-        this.#ajaxResponseAcceptType = options.ajaxResponseAcceptType;
+        this.ajaxResponseAcceptType = options.ajaxResponseAcceptType;
 
         if (!options.ajaxContentType || typeof(options.ajaxContentType) !== 'string') {
             options.ajaxContentType = 'application/x-www-form-urlencoded;charset=UTF-8';
         }
-        this.#ajaxContentType = options.ajaxContentType;
+        this.ajaxContentType = options.ajaxContentType;
 
         if (!options.ajaxDataSrc) {
             options.ajaxDataSrc = 'items';
@@ -336,8 +336,8 @@ class RundizScrollPagination {
                 );
             });
             XHR.addEventListener('loadend', (event) => {
-                let response = (event.currentTarget ? event.currentTarget[thisClass.#ajaxResponseAcceptType] : '');
-                if (thisClass.#ajaxAccept.toLowerCase().includes('/json')) {
+                let response = (event.currentTarget ? event.currentTarget[thisClass.ajaxResponseAcceptType] : '');
+                if (thisClass.ajaxAccept.toLowerCase().includes('/json')) {
                     try {
                         if (response) {
                             response = JSON.parse(response);
@@ -389,15 +389,15 @@ class RundizScrollPagination {
             } else {
                 replaceStartNumber = thisClass.#currentStartOffset;
             }
-            XHR.open(thisClass.#ajaxMethod, thisClass.#ajaxUrl.replace('%startoffset%', replaceStartNumber));
-            XHR.setRequestHeader('Accept', thisClass.#ajaxAccept);
-            if (thisClass.#ajaxContentType) {
-                XHR.setRequestHeader('Content-Type', thisClass.#ajaxContentType);
+            XHR.open(thisClass.ajaxMethod, thisClass.ajaxUrl.replace('%startoffset%', replaceStartNumber));
+            XHR.setRequestHeader('Accept', thisClass.ajaxAccept);
+            if (thisClass.ajaxContentType) {
+                XHR.setRequestHeader('Content-Type', thisClass.ajaxContentType);
             }
-            if (typeof(thisClass.#ajaxData) === 'string') {
-                thisClass.#ajaxData = thisClass.#ajaxData.replace('%startoffset%', replaceStartNumber);
+            if (typeof(thisClass.ajaxData) === 'string') {
+                thisClass.ajaxData = thisClass.ajaxData.replace('%startoffset%', replaceStartNumber);
             }
-            XHR.send(thisClass.#ajaxData);
+            XHR.send(thisClass.ajaxData);
         });
         thisClass.#XHR = promiseObj;
 
