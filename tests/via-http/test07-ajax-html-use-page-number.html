@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>JS scroll pagination</title>
+
+        <link rel="stylesheet" href="assets/css/styles.css">
+        <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+        <meta http-equiv="Pragma" content="no-cache">
+        <meta http-equiv="Expires" content="0">
+    </head>
+    <body>
+        <h1>AJAX HTML</h1>
+        <p>This page use AJAX content type as <code>HTML</code>.</p>
+        <div id="posts-container" class="posts-container"></div>
+
+        <script src="../../src/RundizScrollPagination.js"></script>
+        <script>
+            // on window dom loaded.
+            window.addEventListener('DOMContentLoaded', (event) => {
+                let scrollPaginationClass;
+
+                // listen on ajax failed, done to render items.
+                document.addEventListener('rdScrollPagination.start', (ajaxEvent) => {
+                    const loadingHtml = '<p class="item-loading">Loading &hellip;</p>';
+                    document.querySelector('#posts-container').insertAdjacentHTML('beforeend', loadingHtml);
+                });
+                document.addEventListener('rdScrollPagination.fail', (ajaxEvent) => {
+                    let loadingElement = document.querySelector('.item-loading');
+                    if (loadingElement) {
+                        loadingElement.remove();
+                    }
+                });
+                document.addEventListener('rdScrollPagination.done', (ajaxEvent) => {
+                    let loadingElement = document.querySelector('.item-loading');
+                    if (loadingElement) {
+                        loadingElement.remove();
+                    }
+
+                    let response = (ajaxEvent.detail ? ajaxEvent.detail.response : {});
+                    if (response) {
+                        let parser = new DOMParser();
+                        let doc = parser.parseFromString(response, 'text/html');
+                        let paginationElement = doc.querySelector('.rd-scroll-pagination');
+                        if (paginationElement) {
+                            scrollPaginationClass.setNextStartOffset(parseInt(paginationElement.dataset.startoffset) + 10);
+                        }
+                    }
+
+                    document.querySelector('#posts-container').insertAdjacentHTML('beforeend', response);
+                });
+
+                // initialize new scroll pagination class.
+                scrollPaginationClass = new RundizScrollPagination({
+                    'containerSelector': '#posts-container',
+                    'childrenItemSelector': '.each-post-item',
+                    'paginationMode': 'paged',
+                    'itemsPerPage': 10,
+                    'changeURLParamStartOffset': 'rdspPage',
+                    'ajaxUrl': 'pagination-dummydata-html.php?page=%startoffset%',
+                    'ajaxAccept': 'text/html',
+                    'ajaxResponseAcceptType': 'response',
+                });
+                // invoke/run the class.
+                scrollPaginationClass.invoke();
+            });
+        </script>
+    </body>
+</html>

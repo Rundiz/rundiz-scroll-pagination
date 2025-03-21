@@ -48,7 +48,7 @@ class RundizScrollPagination {
 
     /**
      * @type {string} Ajax response type for accept header. possible values: `response`, `responseXML`, `responseText`. 
-     *              See more details in the code.
+     *              See more details in the constructor.
      */
     #ajaxResponseAcceptType
 
@@ -123,10 +123,22 @@ class RundizScrollPagination {
 
 
     /**
+     * @type {int} Items per page. This option is REQUIRED if you set `paginationMode` to `paged`.
+     */
+    #itemsPerPage;
+
+
+    /**
      * @type {number} The offset that children item will be hide or show when outside visible area. 
      *              For the top it is (0 - nn), for the bottom it is (window height - nn) where `nn` is this value.
      */
     #offsetHideShow
+
+
+    /**
+     * @type {string} Pagination mode. Accepted `offset`, `paged`. Default is `offset`.
+     */
+    #paginationMode
 
 
     /**
@@ -142,7 +154,7 @@ class RundizScrollPagination {
 
 
     /**
-     * @type {Promise} The XHR response based on `Promise` object. You can get this property via `getXHR()` method.
+     * @type {Promise} The XHR response based on `Promise` object.
      */
     #XHR = new Promise((resolve, reject) => {});
 
@@ -156,6 +168,8 @@ class RundizScrollPagination {
      * @param {number} options.bottomOffset The bottom offset where scroll almost to very bottom of page.
      * @param {number} options.offsetHideShow The offset that children item will be hide or show when outside visible area. 
      *              For the top it is (0 - nn), for the bottom it is (window height - nn) where `nn` is this value.
+     * @param {string} options.paginationMode Pagination mode. Accepted `offset`, `paged`. Default is `offset`.
+     * @param {int} options.itemsPerPage Items per page. This option is REQUIRED if you set `paginationMode` to `paged`.
      * @param {number} options.startOffset Start offset can be use in case that you already have pre-loaded child items and you just want to start scroll to next page.
      * @param {boolean} options.changeURL Mark to `true` (default) to change the URL on scrolled to loaded paginated contents, `false` to not change it.
      * @param {boolean} options.changeURLAppendElement Append scroll pagination element or not. 
@@ -164,7 +178,7 @@ class RundizScrollPagination {
      * @param {number} options.changeURLScrollTopOffset The offset from top of display area where the pagination data was scrolled before change the URL to its start offset.
      * @param {string} options.changeURLParamStartOffset Querystring for start offset to push to the URL. 
      *              Example ?rdspStartOffset=10 when scroll to next page from first while displaying 10 items per page.
-     * @param {string} options.ajaxUrl Ajax url with `%startoffset%` to use as start offset. Example: http://domain.tld/page?offset=%startoffset%
+     * @param {string} options.ajaxUrl Ajax url with `%startoffset%` to use as start offset. Example: http://domain.tld/page?offset=%startoffset% . This option is REQUIRED.
      * @param {string} options.ajaxMethod Ajax method such as `GET`, `POST`.
      * @param {Document|XMLHttpRequestBodyInit|Blob|ArrayBuffer|TypedArray|DataView|FormData|URLSearchParams|string} options.ajaxData The Ajax data to send with some methods such as POST, PATCH, PULL, DELETE, etc. 
      *              The data will be like name=value&name2=value2 or get the data from the `FormData()` object. 
@@ -197,6 +211,26 @@ class RundizScrollPagination {
         }
         this.#offsetHideShow = options.offsetHideShow;
 
+        if (!options.paginationMode || typeof(options.paginationMode) !== 'string') {
+            options.paginationMode = 'offset';
+        }
+        if (options.paginationMode !== 'offset' && options.paginationMode !== 'paged') {
+            options.paginationMode = 'offset'
+        }
+        this.#paginationMode = options.paginationMode;
+
+        if (
+            options.paginationMode === 'paged' &&
+            (
+                isNaN(options.itemsPerPage) || 
+                isNaN(parseFloat(options.itemsPerPage)) || 
+                parseFloat(options.itemsPerPage) <= 0
+            )
+        ) {
+            throw new Error('The `itemsPerPage` option is missing.');
+        }
+        this.#itemsPerPage = parseInt(options.itemsPerPage);
+
         if (isNaN(options.startOffset) || isNaN(parseFloat(options.startOffset))) {
             options.startOffset = 0;
         }
@@ -226,7 +260,7 @@ class RundizScrollPagination {
 
         // ajax options -----------------------------------
         if (!options.ajaxUrl || typeof(options.ajaxUrl) !== 'string') {
-            throw new Error('The `ajaxUrl` property is missing.');
+            throw new Error('The `ajaxUrl` option is missing.');
         }
         this.#ajaxUrl = options.ajaxUrl;
 
@@ -349,13 +383,19 @@ class RundizScrollPagination {
                 }
             });
 
-            XHR.open(thisClass.#ajaxMethod, thisClass.#ajaxUrl.replace('%startoffset%', thisClass.#currentStartOffset));
+            let replaceStartNumber = 0;
+            if (this.#paginationMode === 'paged') {
+                replaceStartNumber = thisClass.#convertOffsetToPaged(thisClass.#currentStartOffset);
+            } else {
+                replaceStartNumber = thisClass.#currentStartOffset;
+            }
+            XHR.open(thisClass.#ajaxMethod, thisClass.#ajaxUrl.replace('%startoffset%', replaceStartNumber));
             XHR.setRequestHeader('Accept', thisClass.#ajaxAccept);
             if (thisClass.#ajaxContentType) {
                 XHR.setRequestHeader('Content-Type', thisClass.#ajaxContentType);
             }
             if (typeof(thisClass.#ajaxData) === 'string') {
-                thisClass.#ajaxData = thisClass.#ajaxData.replace('%startoffset%', thisClass.#currentStartOffset);
+                thisClass.#ajaxData = thisClass.#ajaxData.replace('%startoffset%', replaceStartNumber);
             }
             XHR.send(thisClass.#ajaxData);
         });
@@ -417,6 +457,10 @@ class RundizScrollPagination {
                         if (paramName !== thisClass.#changeURLParamStartOffset) {
                             paramObj[paramName] = params.get(paramName);
                         }
+                    }// endfor;
+
+                    if (this.#paginationMode === 'paged') {
+                        thisStartOffset = thisClass.#convertOffsetToPaged(thisStartOffset);
                     }
                     paramObj[thisClass.#changeURLParamStartOffset] = thisStartOffset;
 
@@ -604,6 +648,32 @@ class RundizScrollPagination {
 
 
     /**
+     * Convert offset number to page number.
+     * 
+     * @private This method was called from `#ajaxPagination()`, `#checkScrollAndChangeURL()`.
+     * @since 0.0.6
+     * @param {int} offset The offset number.
+     * @returns Return paged number.
+     */
+    #convertOffsetToPaged(offset) {
+        return (offset / this.#itemsPerPage) + 1;
+    }// #convertOffsetToPaged
+
+
+    /**
+     * Convert page number to offset number.
+     * 
+     * @private This method was called from 
+     * @since 0.0.6
+     * @param {int} paged 
+     * @returns Return offset number.
+     */
+    #convertPagedToOffset(paged) {
+        return ((paged - 1) * this.#itemsPerPage);
+    }// #convertPagedToOffset
+
+
+    /**
      * Detect and set current start offset from querystring.
      * 
      * @private This method was called from `constructor()`.
@@ -612,6 +682,9 @@ class RundizScrollPagination {
     #detectAndSetCurrentStartOffset() {
         const params = new URLSearchParams(window.location.search);
         let currentStartOffsetQuerystring = params.get(this.#changeURLParamStartOffset);
+        if (this.#paginationMode === 'paged') {
+            currentStartOffsetQuerystring = this.#convertPagedToOffset(currentStartOffsetQuerystring);
+        }
 
         // querystring of start offset == nothing
         //      start offset property != 0 -> set to start offset property.
@@ -714,6 +787,8 @@ class RundizScrollPagination {
 
     /**
      * {@inheritdoc}
+     * 
+     * @since 0.0.6
      */
     get currentStartOffset() {
         return this.#currentStartOffset;
@@ -723,6 +798,7 @@ class RundizScrollPagination {
     /**
      * Get `isScrolling` property status (empty string, 'up', 'down')
      * 
+     * @since 0.0.6
      * @return {string} Return empty string, 'up', 'down'
      */
     get isScrolling() {
@@ -733,6 +809,7 @@ class RundizScrollPagination {
     /**
      * Get XHR property object.
      * 
+     * @since 0.0.6
      * @return XMLHttpRequest
      */
     get XHR() {
@@ -743,6 +820,7 @@ class RundizScrollPagination {
     /**
      * Get XHR property object.
      * 
+     * @deprecated Use `class.XHR` instead.
      * @return XMLHttpRequest
      */
     async getXHR() {
