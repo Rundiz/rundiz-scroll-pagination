@@ -7,7 +7,7 @@ if (!is_numeric($start) || $start < 0) {
 
 
 $output = '';
-if ($start < 200) {
+if ($start < 1000) {
     for ($i = 1; $i <= 10; $i++) {
         if ($i === 1) {
             $output .= '<div class="rd-scroll-pagination"'// required html class attribute and name.

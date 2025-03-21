@@ -7,7 +7,7 @@ if (!is_numeric($start) || $start < 0) {
 
 
 $output = [];
-if ($start < 200) {
+if ($start < 1000) {
     for ($i = 1; $i <= 10; $i++) {
         $output['items'][] = 'Item ' . ($start + $i) . ' - start: ' . $start . '; loop: ' . $i . '.';
     }
